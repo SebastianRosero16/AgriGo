@@ -1,0 +1,3 @@
+@echo off
+echo Iniciando AgriGoSJ Frontend (puerto 3000)...
+npm run dev

@@ -1,0 +1,125 @@
+/**
+ * Buyer Dashboard
+ * Main dashboard for buyers
+ */
+
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import { useAuth, useCart } from '@/hooks';
+import { Button, Card } from '@/components/ui';
+import { SparklesIcon, ClipboardDocumentListIcon, ShoppingBagIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
+import { ROUTES, APP_INFO } from '@/utils/constants';
+
+export const BuyerDashboard: React.FC = () => {
+  const { user, logout } = useAuth();
+  const { getTotalItems } = useCart();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success('Sesión cerrada exitosamente');
+      navigate(ROUTES.LOGIN);
+    } catch (error) {
+      toast.error('Error al cerrar sesión');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-whatsapp-bg dark:text-gray-100">
+      {/* Header */}
+      <header className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-primary-600">
+                {APP_INFO.NAME}
+              </h1>
+              <p className="text-sm text-gray-600">
+                Panel de Comprador - Bienvenido, {user?.fullName}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link to={ROUTES.BUYER.MARKETPLACE}>
+                <button className="relative p-2 hover:bg-gray-100 rounded-full transition-colors">
+                  <ShoppingCartIcon className="w-6 h-6 text-gray-700" />
+                  {getTotalItems() > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-primary-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {getTotalItems()}
+                    </span>
+                  )}
+                </button>
+              </Link>
+              <Button variant="danger" onClick={handleLogout}>
+                Cerrar Sesión
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Panel de Control</h2>
+            <p className="text-gray-600 mt-1">Bienvenido a tu panel de compras</p>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            <Link to={ROUTES.BUYER.MARKETPLACE}>
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                <div className="text-center py-8">
+                  <div className="text-green-600 mb-4">
+                    <ShoppingBagIcon className="w-16 h-16 mx-auto" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Marketplace
+                  </h3>
+                  <p className="text-gray-600">
+                    Explora y compra productos agrícolas
+                  </p>
+                </div>
+              </Card>
+            </Link>
+
+            <Link to={ROUTES.SHOPPING_ASSISTANT}>
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                <div className="text-center py-8">
+                  <div className="text-purple-600 mb-4">
+                    <SparklesIcon className="w-16 h-16 mx-auto" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Asistente de Compras IA
+                  </h3>
+                  <p className="text-gray-600">
+                    Busca productos con lenguaje natural
+                  </p>
+                </div>
+              </Card>
+            </Link>
+
+            <Link to={ROUTES.BUYER.ORDERS}>
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                <div className="text-center py-8">
+                  <div className="text-blue-600 mb-4">
+                    <ClipboardDocumentListIcon className="w-16 h-16 mx-auto" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Mis Órdenes
+                  </h3>
+                  <p className="text-gray-600">
+                    Historial y estado de tus pedidos
+                  </p>
+                </div>
+              </Card>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default BuyerDashboard;

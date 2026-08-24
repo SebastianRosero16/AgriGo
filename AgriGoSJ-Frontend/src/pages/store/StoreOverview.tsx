@@ -1,0 +1,228 @@
+/**
+ * Store Overview Page
+ * Dashboard overview for store owners
+ */
+
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import { Card, Button, Loading } from '@/components/ui';
+import {
+  ShoppingBagIcon,
+  ExclamationTriangleIcon,
+  PlusIcon,
+  ClipboardDocumentListIcon,
+} from '@heroicons/react/24/outline';
+import { storeService } from '@/api';
+import { ROUTES } from '@/utils/constants';
+import type { StoreInput } from '@/types';
+
+export const StoreOverview: React.FC = () => {
+  const navigate = useNavigate();
+  const [inputs, setInputs] = useState<StoreInput[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalInputs: 0,
+    lowStock: 0,
+    totalValue: 0,
+    outOfStock: 0,
+  });
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+      const data = await storeService.getInputs();
+      setInputs(data);
+      console.debug('[StoreOverview] inputs loaded:', data);
+      calculateStats(data);
+    } catch (error: any) {
+      toast.error(error?.message || 'Error al cargar datos');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const calculateStats = (inputsList: StoreInput[]) => {
+    const totalInputs = inputsList.length;
+    const lowStock = inputsList.filter(input => input.stock > 0 && input.stock < 10).length;
+    const outOfStock = inputsList.filter(input => input.stock === 0).length;
+    const totalValue = inputsList.reduce((sum, input) => sum + (input.price * input.stock), 0);
+
+    setStats({
+      totalInputs,
+      lowStock,
+      totalValue,
+      outOfStock,
+    });
+  };
+
+  if (isLoading) {
+    return <Loading />;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Panel de Control</h2>
+          <p className="text-gray-600 dark:text-gray-300">Resumen de tu agrotienda</p>
+        </div>
+        <Button variant="primary" onClick={() => navigate(ROUTES.STORE.INPUTS)}>
+          Ver Mis Insumos
+        </Button>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="relative overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 dark:from-whatsapp-dark dark:to-whatsapp-bg dark:text-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">Total Insumos</p>
+              <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">{stats.totalInputs}</p>
+            </div>
+            <div className="text-blue-700 dark:text-blue-300">
+              <ShoppingBagIcon className="w-10 h-10" />
+            </div>
+          </div>
+        </Card>
+
+        <Card className="relative overflow-hidden bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-[#3b2a12] dark:to-[#2a1f0f] dark:text-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">Stock Bajo</p>
+              <p className="text-3xl font-bold text-yellow-700 dark:text-yellow-300">{stats.lowStock}</p>
+            </div>
+            <div className="text-yellow-700 dark:text-yellow-300">
+              <ExclamationTriangleIcon className="w-10 h-10" />
+            </div>
+          </div>
+        </Card>
+
+        <Card className="relative overflow-hidden bg-gradient-to-br from-red-50 to-red-100 dark:from-[#3b1616] dark:to-[#2a1010] dark:text-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">Sin Stock</p>
+              <p className="text-3xl font-bold text-red-700 dark:text-red-300">{stats.outOfStock}</p>
+            </div>
+            <div className="text-red-700 dark:text-red-300">
+              {/* Icono eliminado porque BanIcon no existe en Heroicons */}
+            </div>
+          </div>
+        </Card>
+
+        <Card className="relative overflow-hidden bg-gradient-to-br from-green-50 to-green-100 dark:from-whatsapp-dark dark:to-whatsapp-bg dark:text-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">Valor Total</p>
+              <p className="text-3xl font-bold text-green-700 dark:text-whatsapp-light">
+                ${stats.totalValue.toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Quick Actions */}
+      <Card className="dark:bg-whatsapp-dark">
+      <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Acciones Rápidas</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Button
+            variant="primary"
+            onClick={() => navigate(ROUTES.STORE.INPUTS)}
+            className="h-20 text-lg"
+            icon={<PlusIcon className="w-5 h-5" />}
+          >
+            Agregar Nuevo Insumo
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => navigate(ROUTES.STORE.INPUTS)}
+            className="h-20 text-lg"
+            icon={<ClipboardDocumentListIcon className="w-5 h-5" />}
+          >
+            Gestionar Inventario
+          </Button>
+        </div>
+      </Card>
+
+      {/* Recent Activity */}
+      <Card className="dark:bg-whatsapp-dark">
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Insumos Recientes</h3>
+        {inputs.length === 0 ? (
+          <div className="text-center py-6">
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">
+              No tienes insumos registrados
+            </h3>
+            <p className="text-gray-500 mb-4">
+              Comienza agregando tu primer insumo para empezar a vender
+            </p>
+            <Button variant="primary" onClick={() => navigate(ROUTES.STORE.INPUTS)}>
+              Agregar Primer Insumo
+            </Button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-[#12221f]">
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-200">Insumo</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-200">Tipo</th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-700 dark:text-gray-200">Precio</th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-700 dark:text-gray-200">Stock</th>
+                  <th className="text-center py-3 px-4 font-semibold text-gray-700 dark:text-gray-200">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {inputs.slice(0, 5).map((input) => (
+                  <tr key={input.id} className="border-b border-gray-100 hover:bg-gray-50 dark:border-[#0f2320] dark:hover:bg-[#071614]">
+                    <td className="py-3 px-4">
+                      <div className="font-medium text-gray-900 dark:text-gray-100">{input.name}</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">{input.description}</div>
+                    </td>
+                    <td className="py-3 px-4 text-gray-700 dark:text-gray-200">{input.type}</td>
+                    <td className="py-3 px-4 text-right font-medium">
+                      ${input.price.toFixed(2)} / {input.unit}
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <span className={`font-medium ${
+                        input.stock === 0 ? 'text-red-600' :
+                        input.stock < 10 ? 'text-yellow-600' :
+                        'text-green-600'
+                      }`}>
+                        {input.stock} {input.unit}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        input.stock === 0 ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
+                        input.stock < 10 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' :
+                        'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                      }`}>
+                        {input.stock === 0 ? 'Sin Stock' :
+                         input.stock < 10 ? 'Stock Bajo' :
+                         'Disponible'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {inputs.length > 5 && (
+              <div className="mt-4 text-center">
+                <Button variant="secondary" onClick={() => navigate(ROUTES.STORE.INPUTS)}>
+                  Ver Todos los Insumos ({inputs.length})
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+};
+
+export default StoreOverview;

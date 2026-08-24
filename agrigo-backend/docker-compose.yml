@@ -1,0 +1,161 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: agrigo-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-rootpassword}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - agrigo-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/agrigo_auth
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD:-rootpassword}
+      JWT_SECRET: ${JWT_SECRET:-agrigo-secret-key-2024-super-secure-minimum-256-bits-long}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - agrigo-network
+
+  farmer-service:
+    build:
+      context: ./farmer-service
+      dockerfile: Dockerfile
+    container_name: farmer-service
+    ports:
+      - "8082:8082"
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/agrigo_farmer
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD:-rootpassword}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - agrigo-network
+
+  store-service:
+    build:
+      context: ./store-service
+      dockerfile: Dockerfile
+    container_name: store-service
+    ports:
+      - "8083:8083"
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/agrigo_store
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD:-rootpassword}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - agrigo-network
+
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: payment-service
+    ports:
+      - "8084:8084"
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/agrigo_payment
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD:-rootpassword}
+      BANCOLOMBIA_API_KEY: ${BANCOLOMBIA_API_KEY:-}
+      NEQUI_API_KEY: ${NEQUI_API_KEY:-}
+      NEQUI_CLIENT_ID: ${NEQUI_CLIENT_ID:-}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - agrigo-network
+
+  ai-recommendation-service:
+    build:
+      context: ./ai-recommendation-service
+      dockerfile: Dockerfile
+    container_name: ai-recommendation-service
+    ports:
+      - "8085:8085"
+    environment:
+      HUGGINGFACE_API_KEY: ${HUGGINGFACE_API_KEY:-}
+    networks:
+      - agrigo-network
+
+  product-marketplace-service:
+    build:
+      context: ./product-marketplace-service
+      dockerfile: Dockerfile
+    container_name: product-marketplace-service
+    ports:
+      - "8086:8086"
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/agrigo_marketplace
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD:-rootpassword}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - agrigo-network
+
+  inventory-service:
+    build:
+      context: ./inventory-service
+      dockerfile: Dockerfile
+    container_name: inventory-service
+    ports:
+      - "8087:8087"
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/agrigo_inventory
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD:-rootpassword}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - agrigo-network
+
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "8088:8088"
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/agrigo_notification
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD:-rootpassword}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - agrigo-network
+
+volumes:
+  mysql-data:
+
+networks:
+  agrigo-network:
+    driver: bridge

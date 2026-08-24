@@ -1,0 +1,11 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: ai-recommendation-service
+
+huggingface:
+  api:
+    url: ${HUGGINGFACE_API_URL:https://api-inference.huggingface.co/models/gpt2}
+    key: ${HUGGINGFACE_API_KEY:}
